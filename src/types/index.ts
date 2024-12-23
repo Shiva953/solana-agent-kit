@@ -89,8 +89,62 @@ export interface PythFetchPriceResponse {
 export interface FetchPortfolioResponse{
   status: "success" | "error",
   address: string,
-  fungibleTokenPortfolio?: any,
-  nftPortfolio?: any,
+  fungibleTokenPortfolio?: TokenAsset[],
+  nftPortfolio?: NFTAsset[],
   message?: string,
   code?: string
+}
+
+export interface TokenData {
+  address: string;
+  amount: number;
+  price: number | null;
+}
+
+export interface TokenAsset {
+  type: "token";
+  networkId: string;
+  value: number;
+  data: TokenData;
+  attributes: Record<string, unknown>;
+}
+
+export interface NFTData {
+  address: string;
+  amount: number;
+  price: number | null;
+  name: string;
+  dataUri: string;
+  imageUri: string;
+  attributes: Array<{
+    value: string;
+    trait_type: string;
+  }>;
+  collection: {
+    floorPrice: number | null;
+    id: string;
+    name: string;
+  };
+}
+
+export interface NFTAsset {
+  type: "collectible";
+  attributes: {
+    tags: string[];
+  };
+  name: string;
+  data: NFTData;
+  networkId: string;
+  value: number | null;
+}
+
+export interface TokenInfo {
+  address: string;
+  decimals: number;
+  name: string;
+  networkId: string;
+  symbol: string;
+  logoURI: string;
+  chainId: number;
+  sourceId: string;
 }
