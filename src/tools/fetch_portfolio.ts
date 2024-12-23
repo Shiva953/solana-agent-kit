@@ -2,8 +2,9 @@ import { SolanaAgentKit } from "../index";
 
 /**
  * @param agent SolanaAgentKit instance
+ * @param address Wallet Address
+ * @param addressSystem the chain(eg - "solana","ethereum")
  * @returns Portfolio(Fungible Tokens + NFTs) for given address
- * 
  */
 
 export async function fetchPortfolio(
