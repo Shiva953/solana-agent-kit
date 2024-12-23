@@ -85,3 +85,12 @@ export interface PythFetchPriceResponse {
   message?: string;
   code?: string;
 }
+
+export interface FetchPortfolioResponse{
+  status: "success" | "error",
+  address: string,
+  fungibleTokenPortfolio?: any,
+  nftPortfolio?: any,
+  message?: string,
+  code?: string
+}

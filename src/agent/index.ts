@@ -27,6 +27,7 @@ import {
   createOrcaSingleSidedWhirlpool,
   FEE_TIERS,
   pythFetchPrice,
+  fetchPortfolio
 } from "../tools";
 import {
   CollectionDeployment,
@@ -276,5 +277,9 @@ export class SolanaAgentKit {
 
   async pythFetchPrice(priceFeedID: string) {
     return pythFetchPrice(this, priceFeedID);
+  }
+
+  async fetchPortfolio(address: string, addressSystem: string){
+    return fetchPortfolio(this, address, addressSystem);
   }
 }

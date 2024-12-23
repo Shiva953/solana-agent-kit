@@ -1,7 +1,7 @@
 import { PublicKey } from "@solana/web3.js";
 import Decimal from "decimal.js";
 import { Tool } from "langchain/tools";
-import { PythFetchPriceResponse, SolanaAgentKit } from "../index";
+import { PythFetchPriceResponse, FetchPortfolioResponse, SolanaAgentKit } from "../index";
 import { create_image } from "../tools/create_image";
 import { fetchPrice } from "../tools/fetch_price";
 import { BN } from "@coral-xyz/anchor";
@@ -1012,6 +1012,53 @@ export class SolanaPythFetchPrice extends Tool {
   }
 }
 
+export class SolanaPortfolioTool extends Tool {
+  name = "solana_portfolio";
+  description = `Fetch the portfolio for a given address and address system.
+
+  Inputs (input is a JSON string):
+  address: string, eg "8x2dR8Mpzuz2YqyZyZjUbYWKSWesBo5jMx2Q9Y86udVk" (required)
+  addressSystem: string, eg "solana" (required)`;
+
+  constructor(private solanaKit: SolanaAgentKit) {
+    super();
+  }
+
+  protected async _call(input: string): Promise<string> {
+    const parsedInput = JSON.parse(input);
+    try {
+      if (!parsedInput.address || !parsedInput.addressSystem) {
+        throw new Error("Both address and addressSystem are required");
+      }
+
+      const portfolio = await this.solanaKit.fetchPortfolio(
+        parsedInput.address,
+        parsedInput.addressSystem
+      );
+
+      const fungibleTokenPortfolio = portfolio.fungibleTokenPortfolio;
+      const nftPortfolio = portfolio.nftPortfolio;
+
+      const response: FetchPortfolioResponse = {
+        status: "success",
+        address: parsedInput.address,
+        fungibleTokenPortfolio,
+        nftPortfolio,
+      };
+
+      return JSON.stringify(response);
+    } catch (error: any) {
+      const response: FetchPortfolioResponse = {
+        status: "error",
+        address: parsedInput.address,
+        message: error.message,
+        code: error.code || "UNKNOWN_ERROR",
+      };
+      return JSON.stringify(response);
+    }
+  }
+}
+
 export function createSolanaTools(solanaKit: SolanaAgentKit) {
   return [
     new SolanaBalanceTool(solanaKit),
@@ -1040,6 +1087,7 @@ export function createSolanaTools(solanaKit: SolanaAgentKit) {
     new SolanaOpenbookCreateMarket(solanaKit),
     new SolanaCreateSingleSidedWhirlpoolTool(solanaKit),
     new SolanaPythFetchPrice(solanaKit),
+    new SolanaPortfolioTool(solanaKit),
   ];
 }
 
