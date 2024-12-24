@@ -1,7 +1,7 @@
 import { PublicKey } from "@solana/web3.js";
 import Decimal from "decimal.js";
 import { Tool } from "langchain/tools";
-import { PythFetchPriceResponse, FetchPortfolioResponse, SolanaAgentKit } from "../index";
+import { GibworkCreateTaskReponse, PythFetchPriceResponse, SolanaAgentKit } from "../index";
 import { create_image } from "../tools/create_image";
 import { fetchPrice } from "../tools/fetch_price";
 import { BN } from "@coral-xyz/anchor";
@@ -1012,49 +1012,51 @@ export class SolanaPythFetchPrice extends Tool {
   }
 }
 
-export class SolanaPortfolioTool extends Tool {
-  name = "solana_portfolio";
-  description = `Fetch the portfolio for a given address and address system.
+export class SolanaGibworkTaskTool extends Tool {
+  name = "create_gibwork_task";
+  description = `Create a task on Gibwork platform.
 
   Inputs (input is a JSON string):
-  address: string, eg "8x2dR8Mpzuz2YqyZyZjUbYWKSWesBo5jMx2Q9Y86udVk" (required)
-  addressSystem: string, eg "solana" (required)`;
+  title: string, task title (required)
+  content: string, task description content (required)
+  requirements: string, task requirements (required)
+  tags: string[], array of tags for the task (required)
+  payer: string, payer address (optional, defaults to agent wallet)
+  token: {
+    mintAddress: string, token mint address for payment (required)
+    amount: number, payment amount (required)
+  }`;
 
   constructor(private solanaKit: SolanaAgentKit) {
     super();
   }
 
   protected async _call(input: string): Promise<string> {
-    const parsedInput = JSON.parse(input);
     try {
-      if (!parsedInput.address || !parsedInput.addressSystem) {
-        throw new Error("Both address and addressSystem are required");
-      }
+      const inputFormat = JSON.parse(input);
 
-      const portfolio = await this.solanaKit.fetchPortfolio(
-        parsedInput.address,
-        parsedInput.addressSystem
-      );
+      const task = await this.solanaKit.createGibworkTask(
+        inputFormat.title,
+        inputFormat.content,
+        inputFormat.requirements,
+        inputFormat.tags,
+        inputFormat.token.mintAddress,
+        inputFormat.token.amount,
+        inputFormat.payer 
+    );
 
-      const fungibleTokenPortfolio = portfolio.fungibleTokenPortfolio;
-      const nftPortfolio = portfolio.nftPortfolio;
-
-      const response: FetchPortfolioResponse = {
-        status: "success",
-        address: parsedInput.address,
-        fungibleTokenPortfolio,
-        nftPortfolio,
-      };
-
+    const response: GibworkCreateTaskReponse = {
+      status: "success",
+      taskId: task.taskId,
+      serializedTransaction: task.serializedTransaction
+    }
       return JSON.stringify(response);
     } catch (error: any) {
-      const response: FetchPortfolioResponse = {
+      return JSON.stringify({
         status: "error",
-        address: parsedInput.address,
         message: error.message,
-        code: error.code || "UNKNOWN_ERROR",
-      };
-      return JSON.stringify(response);
+        code: error.code || "UNKNOWN_ERROR"
+      });
     }
   }
 }
@@ -1087,7 +1089,7 @@ export function createSolanaTools(solanaKit: SolanaAgentKit) {
     new SolanaOpenbookCreateMarket(solanaKit),
     new SolanaCreateSingleSidedWhirlpoolTool(solanaKit),
     new SolanaPythFetchPrice(solanaKit),
-    new SolanaPortfolioTool(solanaKit),
+    new SolanaGibworkTaskTool(solanaKit)
   ];
 }
 
